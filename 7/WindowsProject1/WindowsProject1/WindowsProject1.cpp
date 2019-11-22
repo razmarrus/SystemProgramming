@@ -129,7 +129,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	   hWnd, HMENU(60), hInst, NULL);
    hEdit = CreateWindowEx(NULL, L"EDIT", L"SMTH", WS_BORDER | WS_CHILD | WS_VISIBLE | ES_AUTOVSCROLL | LBS_NOTIFY, 350, 50, 500, 30, hWnd, HMENU(60), hInst, NULL);
 
-
+   //SendMessage(hListBox1, LB_ADDSTRING, 0, (LPARAM)(LPSTR)"here is smth");
    // Добавляем в список несколько строк
    /*char buffer[50] = "qwert wwe";
 
@@ -138,11 +138,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    // Включаем режим перерисовки списка*/
 
-
    // Перерисовываем список
    InvalidateRect(hListBox1, NULL, TRUE);
-   //LPCWSTR "MESS";
-
 
    if (!hWnd)
    {
@@ -173,37 +170,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
 	case WM_CREATE:
 	{
-		// Создаем список
-
-		/*LPCWSTR message = L"My First Window";
-		hListBox = CreateWindow(message, NULL,
-			WS_CHILD | WS_VISIBLE | LBS_STANDARD |
-			LBS_WANTKEYBOARDINPUT,
-			30, 30, 200, 100,
-			hWnd, HMENU(60), hInst, NULL);
-
-		// Отменяем режим перерисовки списка
-		SendMessage(hListBox, WM_SETREDRAW, FALSE, 0L);
-
-		// Добавляем в список несколько строк
-
-		SendMessage(hListBox, LB_ADDSTRING, 0,
-			(LPARAM)(LPSTR)"Зеленый");
-
-		SendMessage(hListBox, LB_ADDSTRING, 0,
-			(LPARAM)(LPSTR)"Красный");
-
-		SendMessage(hListBox, LB_ADDSTRING, 0,
-			(LPARAM)(LPSTR)"Розовый");
-
-		SendMessage(hListBox, LB_ADDSTRING, 0,
-			(LPARAM)(LPSTR)"Белый");
-
-		// Включаем режим перерисовки списка
-		SendMessage(hListBox, WM_SETREDRAW, TRUE, 0L);
-
-		// Перерисовываем список
-		InvalidateRect(hListBox, NULL, TRUE);*/
 
 
 		return 0;
@@ -217,9 +183,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
 			case 56: //add
 			{
-				GetWindowText(hEdit, buff, 1024);
-				SendMessage(hListBox1, LB_ADDSTRING, 0, (LPARAM)buff);
-				SendMessage(hListBox1, LB_DELETESTRING, 0, (LPARAM)buff);
+			
+				GetWindowText(hEdit, buff, 1024);   //получаем текст из Edit
+				bool noSuchString = true;       
+				if (SendMessage(hListBox1, LB_GETCOUNT, NULL, NULL) == 0)   //если листбокс пустой, то просто добавляем строку
+					SendMessage(hListBox1, LB_ADDSTRING, 0, (LPARAM)buff);
+				else
+				{
+					for(int i = 0; i < SendMessage(hListBox1, LB_GETCOUNT, NULL, NULL); i++) { //смотрим, если ли такая строка в лист боксе, 
+						if (SendMessage(hListBox1, LB_FINDSTRINGEXACT, i, (LPARAM)buff) != LB_ERR)
+							noSuchString = false;   //сверяем со всеми сроками в листбоксе
+					}
+					if(noSuchString)				//если такой строки нет, то добавляем
+						SendMessage(hListBox1, LB_ADDSTRING, 0, (LPARAM)buff);
+				}
+				break;
+			}
+			case 57:  //clear
+			{
+				int LB1Strings = SendMessage(hListBox1, LB_GETCOUNT, NULL, NULL), LB2Strings = SendMessage(hListBox2, LB_GETCOUNT, NULL, NULL);
+				for (int i = 0; i < LB1Strings; i++)   //цикл по количеству строк в листбоксе
+					SendMessage(hListBox1, LB_DELETESTRING, 0, 0);  //всегда удаляем первую строку
+				for (int i = 0; i < LB2Strings; i++)  //тоже самое для второго листбокса
+					SendMessage(hListBox2, LB_DELETESTRING, 0, 0);
+				//SendMessage(hListBox1, LB_DELETESTRING, 0, 0);
+				//SendMessage(hListBox2, LB_DELETESTRING, 0, 0);
+			}
+			break;
+			case 58:  //to right
+			{
+				int LB1Strings = SendMessage(hListBox1, LB_GETCARETINDEX, NULL, NULL);  //получаем номер выделенной строки в первом листбоксе
+				SendMessage(hListBox1, LB_GETTEXT, LB1Strings, (LPARAM)buff);   //записываем в буфер содержимое это строки
+				bool noSuchString = true; 
+				if (SendMessage(hListBox2, LB_GETCOUNT, NULL, NULL) == 0)     //тоже самое, что с клавишей add, только для второго листбокса
+					SendMessage(hListBox2, LB_ADDSTRING, 0, (LPARAM)buff);
+				else
+				{
+					for (int i = 0; i < SendMessage(hListBox2, LB_GETCOUNT, NULL, NULL); i++) {
+						if (SendMessage(hListBox2, LB_FINDSTRINGEXACT, i, (LPARAM)buff) != LB_ERR)
+							noSuchString = false;
+					}
+					if (noSuchString)
+						SendMessage(hListBox2, LB_ADDSTRING, 0, (LPARAM)buff);
+				}
+			}
+			break;
+			case 59:  //delate
+			{
+				int LB1Strings = SendMessage(hListBox1, LB_GETCARETINDEX, NULL, NULL), LB2Strings = SendMessage(hListBox2, LB_GETCARETINDEX, NULL, NULL);
+				SendMessage(hListBox1, LB_DELETESTRING, LB1Strings, 0);   //получаем индексы выделенных строк и удаляем их
+				SendMessage(hListBox2, LB_DELETESTRING, LB2Strings, 0);
 			}
 			break;
             case IDM_ABOUT:
